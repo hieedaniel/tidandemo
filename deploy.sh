@@ -9,9 +9,8 @@ echo "================================"
 echo "开始部署 tidandemo 应用"
 echo "================================"
 
-# 配置变量（请根据实际情况修改）
-DOCKER_USERNAME="your-docker-username"  # 替换为你的 Docker Hub 用户名
-IMAGE_NAME="${DOCKER_USERNAME}/tidandemo"
+# 配置变量
+IMAGE_NAME="ghcr.io/hieedaniel/tidandemo"
 CONTAINER_NAME="tidandemo"
 
 # 拉取最新镜像

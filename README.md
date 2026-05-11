@@ -52,6 +52,8 @@ streamlit run app.py
 
 ## Docker 部署
 
+镜像地址：`ghcr.io/hieedaniel/tidandemo:latest`
+
 ### 方式一：使用 Docker Compose（推荐）
 
 ```bash
@@ -60,10 +62,9 @@ cat > .env << EOF
 ANTHROPIC_AUTH_TOKEN=your-token
 ANTHROPIC_BASE_URL=https://aibedrock.uniview.com
 ANTHROPIC_MODEL=glm-5
-DOCKER_USERNAME=your-docker-username
 EOF
 
-# 2. 拉取并启动容器
+# 2. 拉取并启动容器（镜像自动从 GHCR 拉取）
 docker-compose up -d
 
 # 3. 查看日志
@@ -76,12 +77,9 @@ docker-compose down
 ### 方式二：使用部署脚本
 
 ```bash
-# 1. 编辑 deploy.sh，设置 Docker Hub 用户名
-vim deploy.sh
+# 1. 创建 .env 文件（同上）
 
-# 2. 创建 .env 文件（同上）
-
-# 3. 运行部署脚本
+# 2. 运行部署脚本
 chmod +x deploy.sh
 ./deploy.sh
 ```
@@ -89,8 +87,8 @@ chmod +x deploy.sh
 ### 方式三：手动 Docker 命令
 
 ```bash
-# 拉取镜像
-docker pull your-username/tidandemo:latest
+# 拉取镜像（公开仓库，无需登录）
+docker pull ghcr.io/hieedaniel/tidandemo:latest
 
 # 启动容器
 docker run -d \
@@ -101,7 +99,7 @@ docker run -d \
   -e ANTHROPIC_BASE_URL="https://aibedrock.uniview.com" \
   -e ANTHROPIC_MODEL="glm-5" \
   -v $(pwd)/data:/app/data \
-  your-username/tidandemo:latest
+  ghcr.io/hieedaniel/tidandemo:latest
 
 # 查看状态
 docker ps | grep tidandemo
@@ -110,26 +108,46 @@ docker ps | grep tidandemo
 docker logs tidandemo -f
 
 # 停止容器
-docker stop tidandemo
-docker rm tidandemo
+docker stop tidandemo && docker rm tidandemo
+```
+
+### 更新部署
+
+```bash
+# 使用 Docker Compose
+docker-compose pull && docker-compose up -d
+
+# 或手动更新
+docker stop tidandemo && docker rm tidandemo
+docker pull ghcr.io/hieedaniel/tidandemo:latest
+# 然后重新运行容器（同上）
 ```
 
 ## GitHub 自动构建
 
-本项目配置了 GitHub Actions 自动构建 Docker 镜像：
+本项目使用 **GitHub Container Registry (GHCR)** 自动构建镜像：
 
 - **触发条件：** 推送到 `main` 分支或 Pull Request
-- **镜像仓库：** Docker Hub (`your-username/tidandemo`)
+- **镜像仓库：** `ghcr.io/hieedaniel/tidandemo`
 - **镜像标签：** `latest` + commit SHA
+- **认证方式：** 自动使用 `GITHUB_TOKEN`（无需配置 Secrets）
 
-### 配置 GitHub Secrets
+### 镜像访问权限
 
-在 GitHub 仓库设置中添加以下 Secrets：
+由于仓库设置为 Public，镜像也是公开的，任何人都可以拉取：
 
-1. `DOCKER_USERNAME` - Docker Hub 用户名
-2. `DOCKER_PASSWORD` - Docker Hub 密码或 Access Token
+```bash
+docker pull ghcr.io/hieedaniel/tidandemo:latest
+```
 
-路径：Settings → Secrets and variables → Actions → New repository secret
+查看所有可用镜像版本：
+https://github.com/hieedaniel/tidandemo/pkgs/container/tidandemo
+
+**优势：**
+- ✅ 无需配置 Docker Hub Secrets
+- ✅ 使用 GitHub 自带的 GITHUB_TOKEN 认证
+- ✅ 公开仓库镜像免费且无限制
+- ✅ 自动构建和推送
 
 ## 技术架构
 

@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   tidandemo:
-    image: ${DOCKER_USERNAME}/tidandemo:latest
+    image: ghcr.io/hieedaniel/tidandemo:latest
     container_name: tidandemo
     restart: unless-stopped
     ports:
