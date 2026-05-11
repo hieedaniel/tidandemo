@@ -1,0 +1,430 @@
+{
+  "global": {
+    "price_sort": "asc",
+    "tag_bonuses": {
+      "新品": 5,
+      "爆款": 4,
+      "高毛利": 3,
+      "现货": 2,
+      "清仓": -3
+    }
+  },
+  "categories": {
+    "工业相机": {
+      "param_schema": {
+        "分辨率": {
+          "column": "resolution_mp",
+          "type": "numeric",
+          "unit": "MP",
+          "display_name": "分辨率",
+          "hint": "统一换算为百万像素(MP)，4K≈8.3MP，1200万=12MP"
+        },
+        "帧率": {
+          "column": "frame_rate",
+          "type": "numeric",
+          "unit": "fps",
+          "display_name": "帧率"
+        },
+        "接口类型": {
+          "column": "interface",
+          "type": "enum",
+          "unit": "",
+          "display_name": "接口类型",
+          "options": ["USB3.0", "GigE", "Camera Link", "CoaXPress"]
+        },
+        "感光元件": {
+          "column": "sensor_type",
+          "type": "enum",
+          "unit": "",
+          "display_name": "感光元件",
+          "options": ["CMOS", "CCD"]
+        },
+        "快门类型": {
+          "column": "shutter_type",
+          "type": "enum",
+          "unit": "",
+          "display_name": "快门类型",
+          "options": ["全局", "卷帘", "滚动"]
+        },
+        "色彩模式": {
+          "column": "color_mode",
+          "type": "enum",
+          "unit": "",
+          "display_name": "色彩模式",
+          "options": ["彩色", "黑白"]
+        },
+        "最低工作温度": {
+          "column": "temp_min",
+          "type": "numeric",
+          "unit": "℃",
+          "display_name": "最低工作温度"
+        },
+        "最高工作温度": {
+          "column": "temp_max",
+          "type": "numeric",
+          "unit": "℃",
+          "display_name": "最高工作温度"
+        },
+        "防护等级": {
+          "column": "protection_level",
+          "type": "enum",
+          "unit": "",
+          "display_name": "防护等级",
+          "options": ["IP40", "IP54", "IP67", "IP68"]
+        },
+        "像素尺寸": {
+          "column": "pixel_size_um",
+          "type": "numeric",
+          "unit": "μm",
+          "display_name": "像素尺寸"
+        },
+        "价格": {
+          "column": "price",
+          "type": "numeric",
+          "unit": "元",
+          "display_name": "价格"
+        }
+      },
+      "special_specs": ["interface", "shutter_type", "protection_level"],
+      "important_specs": {
+        "resolution_mp": {"weight": 0.35, "display_name": "分辨率", "preference": ">="},
+        "frame_rate":    {"weight": 0.30, "display_name": "帧率",   "preference": ">="},
+        "pixel_size_um": {"weight": 0.20, "display_name": "像素尺寸", "preference": "any"},
+        "temp_min":      {"weight": 0.15, "display_name": "最低工作温度", "preference": "<="}
+      }
+    },
+
+    "线扫相机": {
+      "param_schema": {
+        "分辨率": {
+          "column": "resolution_mp",
+          "type": "numeric",
+          "unit": "MP",
+          "display_name": "分辨率"
+        },
+        "行速率": {
+          "column": "frame_rate",
+          "type": "numeric",
+          "unit": "kHz",
+          "display_name": "行速率",
+          "hint": "线扫相机的行速率，单位kHz，填数值即可"
+        },
+        "接口类型": {
+          "column": "interface",
+          "type": "enum",
+          "unit": "",
+          "display_name": "接口类型",
+          "options": ["Camera Link", "GigE", "CoaXPress", "USB3.0"]
+        },
+        "感光元件": {
+          "column": "sensor_type",
+          "type": "enum",
+          "unit": "",
+          "display_name": "感光元件",
+          "options": ["CMOS", "CCD"]
+        },
+        "色彩模式": {
+          "column": "color_mode",
+          "type": "enum",
+          "unit": "",
+          "display_name": "色彩模式",
+          "options": ["彩色", "黑白"]
+        },
+        "像素尺寸": {
+          "column": "pixel_size_um",
+          "type": "numeric",
+          "unit": "μm",
+          "display_name": "像素尺寸"
+        },
+        "最低工作温度": {
+          "column": "temp_min",
+          "type": "numeric",
+          "unit": "℃",
+          "display_name": "最低工作温度"
+        },
+        "最高工作温度": {
+          "column": "temp_max",
+          "type": "numeric",
+          "unit": "℃",
+          "display_name": "最高工作温度"
+        },
+        "防护等级": {
+          "column": "protection_level",
+          "type": "enum",
+          "unit": "",
+          "display_name": "防护等级",
+          "options": ["IP40", "IP54", "IP67", "IP68"]
+        },
+        "价格": {
+          "column": "price",
+          "type": "numeric",
+          "unit": "元",
+          "display_name": "价格"
+        }
+      },
+      "special_specs": ["interface", "color_mode"],
+      "important_specs": {
+        "resolution_mp": {"weight": 0.35, "display_name": "分辨率",  "preference": ">="},
+        "frame_rate":    {"weight": 0.30, "display_name": "行速率",  "preference": ">="},
+        "pixel_size_um": {"weight": 0.35, "display_name": "像素尺寸", "preference": "any"}
+      }
+    },
+
+    "3D相机": {
+      "param_schema": {
+        "分辨率": {
+          "column": "resolution_mp",
+          "type": "numeric",
+          "unit": "MP",
+          "display_name": "分辨率"
+        },
+        "帧率": {
+          "column": "frame_rate",
+          "type": "numeric",
+          "unit": "fps",
+          "display_name": "帧率"
+        },
+        "接口类型": {
+          "column": "interface",
+          "type": "enum",
+          "unit": "",
+          "display_name": "接口类型",
+          "options": ["GigE", "USB3.0", "Camera Link"]
+        },
+        "感光元件": {
+          "column": "sensor_type",
+          "type": "enum",
+          "unit": "",
+          "display_name": "感光元件",
+          "options": ["CMOS", "CCD"]
+        },
+        "最低工作温度": {
+          "column": "temp_min",
+          "type": "numeric",
+          "unit": "℃",
+          "display_name": "最低工作温度"
+        },
+        "最高工作温度": {
+          "column": "temp_max",
+          "type": "numeric",
+          "unit": "℃",
+          "display_name": "最高工作温度"
+        },
+        "防护等级": {
+          "column": "protection_level",
+          "type": "enum",
+          "unit": "",
+          "display_name": "防护等级",
+          "options": ["IP40", "IP54", "IP67", "IP68"]
+        },
+        "价格": {
+          "column": "price",
+          "type": "numeric",
+          "unit": "元",
+          "display_name": "价格"
+        }
+      },
+      "special_specs": ["interface"],
+      "important_specs": {
+        "resolution_mp": {"weight": 0.50, "display_name": "分辨率", "preference": ">="},
+        "frame_rate":    {"weight": 0.50, "display_name": "帧率",   "preference": ">="}
+      }
+    },
+
+    "网络摄像机": {
+      "param_schema": {
+        "分辨率": {
+          "column": "resolution_mp",
+          "type": "numeric",
+          "unit": "MP",
+          "display_name": "分辨率",
+          "hint": "换算为百万像素：400万=4MP，200万=2MP，1080P≈2MP，4K≈8MP"
+        },
+        "最高帧率": {
+          "column": "frame_rate",
+          "type": "numeric",
+          "unit": "fps",
+          "display_name": "最高帧率"
+        },
+        "传感器尺寸": {
+          "column": "sensor_size",
+          "type": "enum",
+          "unit": "",
+          "display_name": "传感器尺寸",
+          "options": ["1/1.8\"", "1/2.0\"", "1/2.8\"", "1/3.0\""]
+        },
+        "焦距": {
+          "column": "focal_length_mm",
+          "type": "numeric",
+          "unit": "mm",
+          "display_name": "焦距"
+        },
+        "补光类型": {
+          "column": "ir_mode",
+          "type": "enum",
+          "unit": "",
+          "display_name": "补光类型",
+          "options": ["红外", "暖光", "无"]
+        },
+        "补光距离": {
+          "column": "ir_range_m",
+          "type": "numeric",
+          "unit": "m",
+          "display_name": "补光距离"
+        },
+        "最低照度": {
+          "column": "min_illumination_lux",
+          "type": "numeric",
+          "unit": "lux",
+          "display_name": "最低照度",
+          "hint": "值越小越好，全彩可达0.0005lux，红外0.01lux"
+        },
+        "视频编码": {
+          "column": "compression",
+          "type": "enum",
+          "unit": "",
+          "display_name": "视频编码",
+          "options": ["超级265", "H.265", "H.264", "MJPEG"]
+        },
+        "防护等级": {
+          "column": "protection_level",
+          "type": "enum",
+          "unit": "",
+          "display_name": "防护等级",
+          "options": ["IP67", "IP66", "IP65", "IP54"]
+        },
+        "供电方式": {
+          "column": "power_supply",
+          "type": "enum",
+          "unit": "",
+          "display_name": "供电方式",
+          "options": ["DC12V/PoE", "DC12V", "PoE"]
+        },
+        "最低工作温度": {
+          "column": "temp_min",
+          "type": "numeric",
+          "unit": "℃",
+          "display_name": "最低工作温度"
+        },
+        "最高工作温度": {
+          "column": "temp_max",
+          "type": "numeric",
+          "unit": "℃",
+          "display_name": "最高工作温度"
+        },
+        "价格": {
+          "column": "price",
+          "type": "numeric",
+          "unit": "元",
+          "display_name": "价格"
+        }
+      },
+      "special_specs": ["ir_mode", "protection_level", "power_supply"],
+      "important_specs": {
+        "resolution_mp": {"weight": 0.40, "display_name": "分辨率",   "preference": ">="},
+        "ir_range_m":    {"weight": 0.30, "display_name": "补光距离", "preference": ">="},
+        "frame_rate":    {"weight": 0.30, "display_name": "最高帧率", "preference": ">="}
+      }
+    },
+
+    "信息发布屏": {
+      "param_schema": {
+        "屏幕尺寸": {
+          "column": "screen_size_inch",
+          "type": "numeric",
+          "unit": "寸",
+          "display_name": "屏幕尺寸"
+        },
+        "面板类型": {
+          "column": "panel_type",
+          "type": "enum",
+          "unit": "",
+          "display_name": "面板类型",
+          "options": ["IPS", "VA", "TN"]
+        },
+        "显示分辨率": {
+          "column": "display_resolution",
+          "type": "enum",
+          "unit": "",
+          "display_name": "显示分辨率",
+          "options": ["1920×1080", "1080×1920", "3840×2160"]
+        },
+        "亮度": {
+          "column": "brightness_nits",
+          "type": "numeric",
+          "unit": "cd/m²",
+          "display_name": "亮度"
+        },
+        "对比度": {
+          "column": "contrast_ratio",
+          "type": "text",
+          "unit": "",
+          "display_name": "对比度"
+        },
+        "操作系统": {
+          "column": "os_version",
+          "type": "enum",
+          "unit": "",
+          "display_name": "操作系统",
+          "options": ["Android 11", "Android 13", "Android 9"]
+        },
+        "内存": {
+          "column": "ram_gb",
+          "type": "numeric",
+          "unit": "GB",
+          "display_name": "内存(RAM)"
+        },
+        "存储": {
+          "column": "rom_gb",
+          "type": "numeric",
+          "unit": "GB",
+          "display_name": "存储(ROM)"
+        },
+        "WiFi": {
+          "column": "wifi",
+          "type": "enum",
+          "unit": "",
+          "display_name": "WiFi",
+          "options": ["支持", "不支持"]
+        },
+        "安装方式": {
+          "column": "install_type",
+          "type": "enum",
+          "unit": "",
+          "display_name": "安装方式",
+          "options": ["壁挂", "立式", "嵌入"]
+        },
+        "整机功耗": {
+          "column": "max_power_w",
+          "type": "numeric",
+          "unit": "W",
+          "display_name": "整机功耗"
+        },
+        "最低工作温度": {
+          "column": "temp_min",
+          "type": "numeric",
+          "unit": "℃",
+          "display_name": "最低工作温度"
+        },
+        "最高工作温度": {
+          "column": "temp_max",
+          "type": "numeric",
+          "unit": "℃",
+          "display_name": "最高工作温度"
+        },
+        "价格": {
+          "column": "price",
+          "type": "numeric",
+          "unit": "元",
+          "display_name": "价格"
+        }
+      },
+      "special_specs": ["install_type", "display_resolution", "wifi"],
+      "important_specs": {
+        "screen_size_inch": {"weight": 0.35, "display_name": "屏幕尺寸", "preference": ">="},
+        "brightness_nits":  {"weight": 0.35, "display_name": "亮度",     "preference": ">="},
+        "ram_gb":           {"weight": 0.30, "display_name": "内存",     "preference": ">="}
+      }
+    }
+  }
+}

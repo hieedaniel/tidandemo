@@ -1,0 +1,690 @@
+{
+  "global": {
+    "price_sort": "asc",
+    "tag_bonuses": {
+      "新品": 5,
+      "爆款": 4,
+      "高毛利": 3,
+      "现货": 2,
+      "清仓": -3
+    }
+  },
+  "categories": {
+    "网络摄像机": {
+      "param_schema": {
+        "分辨率": {
+          "column": "resolution_mp",
+          "type": "numeric",
+          "unit": "MP",
+          "display_name": "分辨率",
+          "hint": "换算为百万像素：400万=4MP，200万=2MP，1080P≈2MP，4K≈8MP"
+        },
+        "最高帧率": {
+          "column": "frame_rate",
+          "type": "numeric",
+          "unit": "fps",
+          "display_name": "最高帧率"
+        },
+        "传感器尺寸": {
+          "column": "sensor_size",
+          "type": "enum",
+          "unit": "",
+          "display_name": "传感器尺寸",
+          "options": [
+            "1/1.8\"",
+            "1/2.0\"",
+            "1/2.8\"",
+            "1/3.0\""
+          ]
+        },
+        "焦距": {
+          "column": "focal_length_mm",
+          "type": "numeric",
+          "unit": "mm",
+          "display_name": "焦距"
+        },
+        "补光类型": {
+          "column": "ir_mode",
+          "type": "enum",
+          "unit": "",
+          "display_name": "补光类型",
+          "options": [
+            "红外",
+            "暖光",
+            "无"
+          ]
+        },
+        "补光距离": {
+          "column": "ir_range_m",
+          "type": "numeric",
+          "unit": "m",
+          "display_name": "补光距离"
+        },
+        "最低照度": {
+          "column": "min_illumination_lux",
+          "type": "numeric",
+          "unit": "lux",
+          "display_name": "最低照度",
+          "hint": "值越小越好，全彩可达0.0005lux，红外0.01lux"
+        },
+        "视频编码": {
+          "column": "compression",
+          "type": "enum",
+          "unit": "",
+          "display_name": "视频编码",
+          "options": [
+            "超级265",
+            "H.265",
+            "H.264",
+            "MJPEG"
+          ]
+        },
+        "防护等级": {
+          "column": "protection_level",
+          "type": "enum",
+          "unit": "",
+          "display_name": "防护等级",
+          "options": [
+            "IP67",
+            "IP66",
+            "IP65",
+            "IP54"
+          ]
+        },
+        "供电方式": {
+          "column": "power_supply",
+          "type": "enum",
+          "unit": "",
+          "display_name": "供电方式",
+          "options": [
+            "DC12V/PoE",
+            "DC12V",
+            "PoE"
+          ]
+        },
+        "最低工作温度": {
+          "column": "temp_min",
+          "type": "numeric",
+          "unit": "℃",
+          "display_name": "最低工作温度"
+        },
+        "最高工作温度": {
+          "column": "temp_max",
+          "type": "numeric",
+          "unit": "℃",
+          "display_name": "最高工作温度"
+        },
+        "价格": {
+          "column": "price",
+          "type": "numeric",
+          "unit": "元",
+          "display_name": "价格"
+        }
+      },
+      "special_specs": [
+        "ir_mode",
+        "protection_level",
+        "power_supply"
+      ],
+      "important_specs": {
+        "resolution_mp": {
+          "weight": 0.4,
+          "display_name": "分辨率",
+          "preference": ">="
+        },
+        "ir_range_m": {
+          "weight": 0.3,
+          "display_name": "补光距离",
+          "preference": ">="
+        },
+        "frame_rate": {
+          "weight": 0.3,
+          "display_name": "最高帧率",
+          "preference": ">="
+        }
+      }
+    },
+    "信息发布屏": {
+      "param_schema": {
+        "屏幕尺寸": {
+          "column": "screen_size_inch",
+          "type": "numeric",
+          "unit": "寸",
+          "display_name": "屏幕尺寸",
+          "options": [],
+          "default_operator": ">="
+        },
+        "面板类型": {
+          "column": "panel_type",
+          "type": "enum",
+          "unit": "",
+          "display_name": "面板类型",
+          "options": [
+            "IPS",
+            "VA",
+            "TN"
+          ],
+          "default_operator": "="
+        },
+        "显示分辨率": {
+          "column": "display_resolution",
+          "type": "enum",
+          "unit": "",
+          "display_name": "显示分辨率",
+          "options": [
+            "1920×1080",
+            "1080×1920",
+            "3840×2160"
+          ],
+          "default_operator": "="
+        },
+        "亮度": {
+          "column": "brightness_nits",
+          "type": "numeric",
+          "unit": "cd/m²",
+          "display_name": "亮度",
+          "options": [],
+          "default_operator": "="
+        },
+        "对比度": {
+          "column": "contrast_ratio",
+          "type": "text",
+          "unit": "",
+          "display_name": "对比度",
+          "options": [],
+          "default_operator": "="
+        },
+        "操作系统": {
+          "column": "os_version",
+          "type": "enum",
+          "unit": "",
+          "display_name": "操作系统",
+          "options": [
+            "Android 11",
+            "Android 13",
+            "Android 9",
+            "Android"
+          ],
+          "default_operator": "contains"
+        },
+        "内存": {
+          "column": "ram_gb",
+          "type": "numeric",
+          "unit": "GB",
+          "display_name": "内存(RAM)",
+          "options": [],
+          "default_operator": ">="
+        },
+        "存储": {
+          "column": "rom_gb",
+          "type": "numeric",
+          "unit": "GB",
+          "display_name": "存储(ROM)",
+          "options": [],
+          "default_operator": ">="
+        },
+        "WiFi": {
+          "column": "wifi",
+          "type": "enum",
+          "unit": "",
+          "display_name": "WiFi",
+          "options": [
+            "支持",
+            "不支持"
+          ],
+          "default_operator": "="
+        },
+        "安装方式": {
+          "column": "install_type",
+          "type": "enum",
+          "unit": "",
+          "display_name": "安装方式",
+          "options": [
+            "壁挂",
+            "立式",
+            "嵌入"
+          ],
+          "default_operator": "="
+        },
+        "整机功耗": {
+          "column": "max_power_w",
+          "type": "numeric",
+          "unit": "W",
+          "display_name": "整机功耗",
+          "options": [],
+          "default_operator": "="
+        },
+        "最低工作温度": {
+          "column": "temp_min",
+          "type": "numeric",
+          "unit": "℃",
+          "display_name": "最低工作温度",
+          "options": [],
+          "default_operator": "="
+        },
+        "最高工作温度": {
+          "column": "temp_max",
+          "type": "numeric",
+          "unit": "℃",
+          "display_name": "最高工作温度",
+          "options": [],
+          "default_operator": "="
+        },
+        "价格": {
+          "column": "price",
+          "type": "numeric",
+          "unit": "元",
+          "display_name": "价格",
+          "options": [],
+          "default_operator": "="
+        }
+      },
+      "special_specs": [
+        "display_resolution",
+        "wifi",
+        "screen_size_inch"
+      ],
+      "important_specs": {
+        "brightness_nits": {
+          "weight": 0.35,
+          "display_name": "亮度",
+          "preference": ">="
+        },
+        "ram_gb": {
+          "weight": 0.3,
+          "display_name": "内存",
+          "preference": ">="
+        },
+        "panel_type": {
+          "weight": 0.25,
+          "display_name": "面板类型",
+          "preference": ">="
+        },
+        "contrast_ratio": {
+          "weight": 0.25,
+          "display_name": "对比度",
+          "preference": ">="
+        },
+        "os_version": {
+          "weight": 0.25,
+          "display_name": "操作系统",
+          "preference": ">="
+        },
+        "rom_gb": {
+          "weight": 0.25,
+          "display_name": "存储(ROM)",
+          "preference": ">="
+        },
+        "max_power_w": {
+          "weight": 0.25,
+          "display_name": "整机功耗",
+          "preference": ">="
+        },
+        "temp_min": {
+          "weight": 0.25,
+          "display_name": "最低工作温度",
+          "preference": ">="
+        },
+        "temp_max": {
+          "weight": 0.25,
+          "display_name": "最高工作温度",
+          "preference": ">="
+        }
+      }
+    },
+    "以太网交换机": {
+      "param_schema": {
+        "设备定位": {
+          "column": "device_position",
+          "type": "enum",
+          "unit": "",
+          "options": [
+            "接入交换机",
+            "汇聚交换机",
+            "核心交换机"
+          ],
+          "hint": "设备在网络中的部署层级"
+        },
+        "管理级别": {
+          "column": "management_level",
+          "type": "enum",
+          "unit": "",
+          "options": [
+            "非管理型",
+            "二层管理",
+            "三层管理"
+          ],
+          "hint": "交换机的管理与路由能力等级"
+        },
+        "接口类型": {
+          "column": "interface_type",
+          "type": "text",
+          "unit": "",
+          "options": [],
+          "hint": "各类端口数量及速率描述，如24千兆电+4万兆光"
+        },
+        "交换容量": {
+          "column": "switching_capacity",
+          "type": "text",
+          "unit": "",
+          "options": [],
+          "hint": "整机交换矩阵带宽，单位可为Gbps或Tbps"
+        },
+        "包转发率": {
+          "column": "packet_forwarding_rate",
+          "type": "numeric",
+          "unit": "Mpps",
+          "options": [],
+          "hint": "整机每秒最大转发报文数"
+        },
+        "包缓冲区": {
+          "column": "packet_buffer",
+          "type": "text",
+          "unit": "",
+          "options": [],
+          "hint": "报文缓存大小，如1.5M bit"
+        },
+        "MAC表容量": {
+          "column": "mac_table_size",
+          "type": "text",
+          "unit": "",
+          "options": [],
+          "hint": "MAC地址表最大条目数，如4K、32K"
+        },
+        "PoE支持": {
+          "column": "poe_support",
+          "type": "enum",
+          "unit": "",
+          "options": [
+            "支持",
+            "不支持"
+          ],
+          "hint": "是否支持以太网供电功能"
+        },
+        "PoE整机最大功率": {
+          "column": "poe_total_power",
+          "type": "numeric",
+          "unit": "W",
+          "options": [],
+          "hint": "全部PoE端口同时供电的整机最大功率"
+        },
+        "单端口PoE最大功率": {
+          "column": "poe_port_max_power",
+          "type": "numeric",
+          "unit": "W",
+          "options": [],
+          "hint": "单个PoE端口可输出的最大功率"
+        },
+        "整机功耗": {
+          "column": "total_power_consumption",
+          "type": "numeric",
+          "unit": "W",
+          "options": [],
+          "hint": "设备满载运行时的总功耗"
+        },
+        "电源规格": {
+          "column": "power_supply",
+          "type": "text",
+          "unit": "",
+          "options": [],
+          "hint": "供电类型及电压范围，如100-240V AC 50/60Hz"
+        },
+        "工作温度": {
+          "column": "working_temp",
+          "type": "text",
+          "unit": "",
+          "options": [],
+          "hint": "设备正常运行的环境温度范围"
+        },
+        "存储温度": {
+          "column": "storage_temp",
+          "type": "text",
+          "unit": "",
+          "options": [],
+          "hint": "设备存放时允许的环境温度范围"
+        },
+        "工作湿度": {
+          "column": "working_humidity",
+          "type": "text",
+          "unit": "",
+          "options": [],
+          "hint": "设备正常运行的相对湿度范围"
+        },
+        "物理尺寸": {
+          "column": "dimensions",
+          "type": "text",
+          "unit": "",
+          "options": [],
+          "hint": "宽×深×高，单位mm"
+        },
+        "重量": {
+          "column": "weight",
+          "type": "numeric",
+          "unit": "kg",
+          "options": [],
+          "hint": "设备净重"
+        },
+        "价格": {
+          "column": "price",
+          "type": "numeric",
+          "unit": "元",
+          "options": []
+        }
+      },
+      "special_specs": [
+        "poe_support"
+      ],
+      "important_specs": {
+        "device_position": {
+          "weight": 0.25,
+          "display_name": "device_position",
+          "preference": ">="
+        },
+        "management_level": {
+          "weight": 0.25,
+          "display_name": "management_level",
+          "preference": ">="
+        },
+        "interface_type": {
+          "weight": 0.25,
+          "display_name": "interface_type",
+          "preference": ">="
+        },
+        "switching_capacity": {
+          "weight": 0.25,
+          "display_name": "switching_capacity",
+          "preference": ">="
+        },
+        "packet_forwarding_rate": {
+          "weight": 0.25,
+          "display_name": "packet_forwarding_rate",
+          "preference": ">="
+        },
+        "packet_buffer": {
+          "weight": 0.25,
+          "display_name": "packet_buffer",
+          "preference": ">="
+        },
+        "mac_table_size": {
+          "weight": 0.25,
+          "display_name": "mac_table_size",
+          "preference": ">="
+        },
+        "poe_total_power": {
+          "weight": 0.25,
+          "display_name": "poe_total_power",
+          "preference": ">="
+        },
+        "poe_port_max_power": {
+          "weight": 0.25,
+          "display_name": "poe_port_max_power",
+          "preference": ">="
+        },
+        "total_power_consumption": {
+          "weight": 0.25,
+          "display_name": "total_power_consumption",
+          "preference": ">="
+        },
+        "power_supply": {
+          "weight": 0.25,
+          "display_name": "power_supply",
+          "preference": ">="
+        },
+        "working_temp": {
+          "weight": 0.25,
+          "display_name": "working_temp",
+          "preference": ">="
+        },
+        "storage_temp": {
+          "weight": 0.25,
+          "display_name": "storage_temp",
+          "preference": ">="
+        },
+        "working_humidity": {
+          "weight": 0.25,
+          "display_name": "working_humidity",
+          "preference": ">="
+        },
+        "dimensions": {
+          "weight": 0.25,
+          "display_name": "dimensions",
+          "preference": ">="
+        },
+        "weight": {
+          "weight": 0.25,
+          "display_name": "weight",
+          "preference": ">="
+        }
+      }
+    },
+    "网络视频录像机": {
+      "param_schema": {
+        "型号名称": {
+          "column": "model_name",
+          "type": "text",
+          "unit": "",
+          "options": [],
+          "hint": "产品具体型号",
+          "default_operator": "="
+        },
+        "最大接入路数": {
+          "column": "max_channels",
+          "type": "numeric",
+          "unit": "路",
+          "options": [],
+          "hint": "支持接入的IPC最大数量",
+          "default_operator": ">="
+        },
+        "硬盘盘位": {
+          "column": "hdd_bays",
+          "type": "numeric",
+          "unit": "盘位",
+          "options": [],
+          "hint": "支持的SATA硬盘接口数量",
+          "default_operator": "="
+        },
+        "接入带宽": {
+          "column": "incoming_bandwidth_mbps",
+          "type": "numeric",
+          "unit": "Mbps",
+          "options": [],
+          "hint": "网络视频接入带宽",
+          "default_operator": "="
+        },
+        "网口数量": {
+          "column": "network_ports",
+          "type": "numeric",
+          "unit": "个",
+          "options": [],
+          "hint": "RJ45以太网电口数量",
+          "default_operator": "="
+        },
+        "HDMI接口": {
+          "column": "hdmi_ports",
+          "type": "numeric",
+          "unit": "个",
+          "options": [],
+          "hint": "HDMI视频输出接口数量",
+          "default_operator": "="
+        },
+        "VGA接口": {
+          "column": "vga_ports",
+          "type": "numeric",
+          "unit": "个",
+          "options": [],
+          "hint": "VGA视频输出接口数量",
+          "default_operator": "="
+        },
+        "报警输入": {
+          "column": "alarm_input",
+          "type": "numeric",
+          "unit": "路",
+          "options": [],
+          "hint": "外部报警信号输入路数",
+          "default_operator": "="
+        },
+        "报警输出": {
+          "column": "alarm_output",
+          "type": "numeric",
+          "unit": "路",
+          "options": [],
+          "hint": "外部报警信号输出路数",
+          "default_operator": "="
+        },
+        "视频解码格式": {
+          "column": "video_decode_format",
+          "type": "text",
+          "unit": "",
+          "options": [],
+          "hint": "支持的视频解码标准，如H.265/H.264",
+          "default_operator": "="
+        },
+        "智能功能": {
+          "column": "ai_features",
+          "type": "text",
+          "unit": "",
+          "options": [],
+          "hint": "支持的智能分析功能，如人脸检测、视频结构化",
+          "default_operator": "="
+        },
+        "RAID支持": {
+          "column": "raid_support",
+          "type": "text",
+          "unit": "",
+          "options": [],
+          "hint": "支持的磁盘阵列模式",
+          "default_operator": "="
+        },
+        "价格": {
+          "column": "price",
+          "type": "numeric",
+          "unit": "元",
+          "options": [],
+          "hint": "产品销售价格",
+          "default_operator": "="
+        }
+      },
+      "special_specs": [
+        "max_channels",
+        "hdd_bays"
+      ],
+      "important_specs": {
+        "hdmi_ports": {
+          "weight": 0.25,
+          "display_name": "hdmi_ports",
+          "preference": ">="
+        },
+        "vga_ports": {
+          "weight": 0.25,
+          "display_name": "vga_ports",
+          "preference": ">="
+        },
+        "network_ports": {
+          "weight": 0.25,
+          "display_name": "network_ports",
+          "preference": ">="
+        }
+      }
+    }
+  }
+}
