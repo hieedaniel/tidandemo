@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  tidandemo:
+    image: ${DOCKER_USERNAME}/tidandemo:latest
+    container_name: tidandemo
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    environment:
+      - ANTHROPIC_AUTH_TOKEN=${ANTHROPIC_AUTH_TOKEN}
+      - ANTHROPIC_BASE_URL=${ANTHROPIC_BASE_URL}
+      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL}
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
