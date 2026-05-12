@@ -8,6 +8,8 @@ from typing import Optional
 DATA_DIR = Path(__file__).parent.parent / "data"
 CONFIG_FILE = DATA_DIR / "config.json"
 DEFAULT_CONFIG_FILE = DATA_DIR / "default_config.json"
+# Factory copy lives outside the Docker volume mount so it survives -v ./data:/app/data
+FACTORY_CONFIG_FILE = Path(__file__).parent.parent / "default_config.json"
 DB_FILE = DATA_DIR / "products.db"
 LEGACY_CSV = DATA_DIR / "products.csv"
 SAMPLE_CSV = DATA_DIR / "sample_products.csv"
@@ -19,9 +21,25 @@ class DataManager:
     def __init__(self):
         DATA_DIR.mkdir(exist_ok=True)
         self._config: Optional[dict] = None
+        self._ensure_default_config()
         self._ensure_db()
 
     # ── Config ────────────────────────────────────────────────────────────────
+
+    def _ensure_default_config(self):
+        """Restore default_config.json from the factory copy when missing.
+
+        On Docker deployments with -v ./data:/app/data, the volume mount wipes
+        the data/ directory baked into the image (including default_config.json).
+        The factory copy at /app/default_config.json lives outside the volume and
+        is used to re-seed the data/ directory on first startup.
+        """
+        if not DEFAULT_CONFIG_FILE.exists():
+            if FACTORY_CONFIG_FILE.exists():
+                shutil.copy(FACTORY_CONFIG_FILE, DEFAULT_CONFIG_FILE)
+                print(f"[初始化] 已从内置默认配置创建 {DEFAULT_CONFIG_FILE}")
+            else:
+                print(f"[警告] 未找到默认配置文件，部分功能可能不可用")
 
     def get_config(self) -> dict:
         if CONFIG_FILE.exists():

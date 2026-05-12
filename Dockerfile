@@ -21,6 +21,11 @@ COPY data/ ./data/
 COPY products/ ./products/
 COPY CLAUDE.md .
 
+# Keep a factory copy of the default config outside the data/ volume mount path.
+# When the server mounts -v ./data:/app/data, this copy survives and is used
+# by DataManager to auto-initialize data/default_config.json on first startup.
+COPY data/default_config.json ./default_config.json
+
 # Expose Streamlit port
 EXPOSE 8501
 
