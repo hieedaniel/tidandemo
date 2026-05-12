@@ -549,6 +549,22 @@ with tab_search:
 
             # 如果类别识别成功，继续参数提取
             if category and category in available_categories:
+                # 自动滚动到类别识别结果
+                st.markdown('<div id="scroll_step1a"></div>', unsafe_allow_html=True)
+                st.components.v1.html(
+                    """
+                    <script>
+                        var anchor = window.parent.document.getElementById("scroll_step1a");
+                        if (anchor) {
+                            setTimeout(function() {
+                                anchor.scrollIntoView({behavior: "smooth", block: "start"});
+                            }, 100);
+                        }
+                    </script>
+                    """,
+                    height=0,
+                )
+
                 # Step 1b: 参数提取
                 step1b_status = st.status("**Step 1b · 参数提取**", state="running", expanded=True)
 
@@ -671,6 +687,22 @@ with tab_search:
                     st.session_state.last_extracted = extracted
                     st.session_state.last_category = category
 
+                    # 自动滚动到参数提取结果
+                    st.markdown('<div id="scroll_step1b"></div>', unsafe_allow_html=True)
+                    st.components.v1.html(
+                        """
+                        <script>
+                            var anchor = window.parent.document.getElementById("scroll_step1b");
+                            if (anchor) {
+                                setTimeout(function() {
+                                    anchor.scrollIntoView({behavior: "smooth", block: "start"});
+                                }, 100);
+                            }
+                        </script>
+                        """,
+                        height=0,
+                    )
+
                     # 显示提取结果摘要
                     st.info(f"**需求摘要**：{summary}")
 
@@ -681,6 +713,22 @@ with tab_search:
 
             # ========== Step 2: 规则引擎筛选与评分 ==========
             if extracted and category:
+                # 自动滚动到 Step 2 开始位置
+                st.markdown('<div id="scroll_step2"></div>', unsafe_allow_html=True)
+                st.components.v1.html(
+                    """
+                    <script>
+                        var anchor = window.parent.document.getElementById("scroll_step2");
+                        if (anchor) {
+                            setTimeout(function() {
+                                anchor.scrollIntoView({behavior: "smooth", block: "start"});
+                            }, 100);
+                        }
+                    </script>
+                    """,
+                    height=0,
+                )
+
                 st.markdown("#### ⚙️ Step 2 · 规则引擎筛选与评分")
 
                 step2_status = st.status("**Step 2 · 规则引擎处理**", state="running", expanded=True)
@@ -741,6 +789,22 @@ with tab_search:
                             step2_status.write(f"🏆 最高得分：{top_score:.1f} 分 - {top_product}")
 
                         step2_status.update(label=f"**✅ Step 2 完成 · 推荐 {len(passed)} 款产品**", state="complete", expanded=False)
+
+                        # 自动滚动到最终结果
+                        st.markdown('<div id="scroll_results"></div>', unsafe_allow_html=True)
+                        st.components.v1.html(
+                            """
+                            <script>
+                                var anchor = window.parent.document.getElementById("scroll_results");
+                                if (anchor) {
+                                    setTimeout(function() {
+                                        anchor.scrollIntoView({behavior: "smooth", block: "start"});
+                                    }, 100);
+                                }
+                            </script>
+                            """,
+                            height=0,
+                        )
 
                         # 渲染结果
                         render_results(results, extracted, global_cfg)
