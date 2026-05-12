@@ -307,7 +307,7 @@ with tab_search:
             st.markdown("#### 🧠 Step 1 · Claude 智能参数解析")
 
             # Step 1a: 类别识别
-            step1a_status = st.status("**Step 1a · 产品类别识别**", state="running")
+            step1a_status = st.status("**Step 1a · 产品类别识别**", state="running", expanded=True)
 
             try:
                 step1a_status.write("📋 正在分析客户需求文本...")
@@ -416,7 +416,7 @@ with tab_search:
                 # 最终结果处理
                 if category and category in available_categories:
                     step1a_status.write(f"🎯 类别识别结果：{category}")
-                    step1a_status.update(label=f"**✅ Step 1a 完成 · 类别识别成功：{category}**", state="complete")
+                    step1a_status.update(label=f"**✅ Step 1a 完成 · 类别识别成功：{category}**", state="complete", expanded=False)
                     st.success(f"🎯 **识别类别**：{category}")
                 else:
                     step1a_status.write(f"⚠️ JSON 解析未成功，尝试文本提取...")
@@ -442,7 +442,7 @@ with tab_search:
                     # 最终判断
                     if category and category in available_categories:
                         step1a_status.write(f"🎯 类别识别结果：{category}")
-                        step1a_status.update(label=f"**✅ Step 1a 完成 · 类别识别成功：{category}**", state="complete")
+                        step1a_status.update(label=f"**✅ Step 1a 完成 · 类别识别成功：{category}**", state="complete", expanded=False)
                         st.success(f"🎯 **识别类别**：{category}")
                     else:
                         step1a_status.write(f"❌ 所有解析方法失败")
@@ -452,19 +452,19 @@ with tab_search:
                         if category and category not in available_categories:
                             step1a_status.write(f"⚠️ 类别不在配置列表中：{category}")
 
-                        step1a_status.update(label="**❌ Step 1a 失败 · 无法识别类别**", state="error")
+                        step1a_status.update(label="**❌ Step 1a 失败 · 无法识别类别**", state="error", expanded=True)
                         st.error(f"未能识别产品类别。原始响应：`{cat_text}`")
                         extracted = None
 
             except Exception as e:
-                step1a_status.update(label=f"**❌ Step 1a 失败 · {str(e)[:100]}**", state="error")
+                step1a_status.update(label=f"**❌ Step 1a 失败 · {str(e)[:100]}**", state="error", expanded=True)
                 st.error(f"类别识别失败: {e}")
                 extracted = None
 
             # 如果类别识别成功，继续参数提取
             if category and category in available_categories:
                 # Step 1b: 参数提取
-                step1b_status = st.status("**Step 1b · 参数提取**", state="running")
+                step1b_status = st.status("**Step 1b · 参数提取**", state="running", expanded=True)
 
                 try:
                     step1b_status.write(f"📂 正在加载【{category}】参数字典...")
@@ -582,7 +582,7 @@ with tab_search:
                         step1b_status.write("提取参数摘要：")
                         step1b_status.code(chr(10).join(params_summary), language="text")
 
-                    step1b_status.update(label=f"**✅ Step 1b 完成 · 参数提取成功（{len(extracted_params)} 个参数）**", state="complete")
+                    step1b_status.update(label=f"**✅ Step 1b 完成 · 参数提取成功（{len(extracted_params)} 个参数）**", state="complete", expanded=False)
 
                     # 组合完整的 extracted 结果
                     extracted = {
@@ -597,7 +597,7 @@ with tab_search:
                     st.info(f"**需求摘要**：{summary}")
 
                 except Exception as e:
-                    step1b_status.update(label=f"**❌ Step 1b 失败 · {str(e)[:100]}**", state="error")
+                    step1b_status.update(label=f"**❌ Step 1b 失败 · {str(e)[:100]}**", state="error", expanded=True)
                     st.error(f"参数提取失败: {e}")
                     extracted = None
 
@@ -605,14 +605,14 @@ with tab_search:
             if extracted and category:
                 st.markdown("#### ⚙️ Step 2 · 规则引擎筛选与评分")
 
-                step2_status = st.status("**Step 2 · 规则引擎处理**", state="running")
+                step2_status = st.status("**Step 2 · 规则引擎处理**", state="running", expanded=True)
 
                 try:
                     step2_status.write(f"📊 正在从数据库加载【{category}】产品...")
                     products = dm.get_products(category)
 
                     if products.empty:
-                        step2_status.update(label="**⚠️ Step 2 警告 · 产品库为空**", state="complete")
+                        step2_status.update(label="**⚠️ Step 2 警告 · 产品库为空**", state="complete", expanded=False)
                         st.warning(f"【{category}】产品库为空，请先导入产品数据。")
                     else:
                         step2_status.write(f"✅ 加载 {len(products)} 款产品")
@@ -662,13 +662,13 @@ with tab_search:
                             top_product = passed.iloc[0].get("product_name", "")
                             step2_status.write(f"🏆 最高得分：{top_score:.1f} 分 - {top_product}")
 
-                        step2_status.update(label=f"**✅ Step 2 完成 · 推荐 {len(passed)} 款产品**", state="complete")
+                        step2_status.update(label=f"**✅ Step 2 完成 · 推荐 {len(passed)} 款产品**", state="complete", expanded=False)
 
                         # 渲染结果
                         render_results(results, extracted, global_cfg)
 
                 except Exception as e:
-                    step2_status.update(label=f"**❌ Step 2 失败 · {str(e)[:100]}**", state="error")
+                    step2_status.update(label=f"**❌ Step 2 失败 · {str(e)[:100]}**", state="error", expanded=True)
                     st.error(f"规则引擎处理失败: {e}")
 
     elif (
