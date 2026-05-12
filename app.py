@@ -1,5 +1,6 @@
 import os
 import json
+from datetime import datetime
 import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
@@ -12,6 +13,11 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+import extra_streamlit_components as stx
+
+# Hidden component — renders at page top, reads/writes browser cookies for API config persistence
+_cm = stx.CookieManager(key="api_cfg")
 
 from core.data_manager import DataManager
 from core.llm_mapper import LLMMapper
@@ -35,6 +41,7 @@ def _init_state():
         "last_results": None,
         "last_input": "",
         "last_category": None,
+        "_api_cfg_from_cookie": False,  # True once we've loaded from browser cookies this session
     }.items():
         if k not in st.session_state:
             st.session_state[k] = v
@@ -187,6 +194,30 @@ with st.sidebar:
     st.divider()
 
     st.subheader("🔑 API 配置")
+
+    # Load from browser cookies once per browser session.
+    # get_all() returns None before the JS component finishes loading,
+    # and a dict (possibly empty) once it has — so isinstance(..., dict) is the reliable gate.
+    if not st.session_state._api_cfg_from_cookie:
+        try:
+            _ck = _cm.get_all()
+        except Exception:
+            _ck = None
+        if isinstance(_ck, dict):
+            if _ck.get("api_key"):
+                st.session_state.api_key = _ck["api_key"]
+            if _ck.get("base_url"):
+                st.session_state.base_url = _ck["base_url"]
+            if _ck.get("model"):
+                st.session_state.model = _ck["model"]
+            st.session_state._api_cfg_from_cookie = True
+
+    _saved_in_browser = st.session_state._api_cfg_from_cookie and bool(
+        ((_cm.get_all() or {}).get("api_key"))
+    )
+    if _saved_in_browser:
+        st.caption("✅ 已从浏览器本地读取保存的配置")
+
     key_input = st.text_input(
         "API Key",
         value=st.session_state.api_key,
@@ -214,6 +245,22 @@ with st.sidebar:
     )
     if model_input != st.session_state.model:
         st.session_state.model = model_input
+
+    _c1, _c2 = st.columns(2)
+    with _c1:
+        if st.button("💾 保存到本地", use_container_width=True, help="保存到浏览器，下次访问自动加载，无需重新输入"):
+            _exp = datetime(2099, 1, 1)
+            _cm.set("api_key",  key_input,      expires_at=_exp)
+            _cm.set("base_url", base_url_input, expires_at=_exp)
+            _cm.set("model",    model_input,    expires_at=_exp)
+            st.success("✅ 已保存！")
+    with _c2:
+        if st.button("🗑 清除", use_container_width=True, help="清除浏览器中已保存的配置"):
+            _cm.delete("api_key")
+            _cm.delete("base_url")
+            _cm.delete("model")
+            st.session_state._api_cfg_from_cookie = False
+            st.info("已清除本地配置")
 
     if st.session_state.api_key:
         st.success(f"已配置: {st.session_state.model} ✅")
