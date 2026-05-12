@@ -870,7 +870,177 @@ with tab_rules:
                     st.success(f"【{cat}】规则配置已保存！")
                     st.rerun()
 
-                # ── Section C: 危险操作 ────────────────────────────────────────
+                # ── Section C: 配置导出 ────────────────────────────────────────
+                with st.expander("📦  配置导出与导入", expanded=False):
+                    st.caption(
+                        "导出当前类别的完整筛选规则配置（包含参数字典、特殊规格、重要规格权重），"
+                        "用于备份或导入到正式环境。"
+                    )
+
+                    ec1, ec2 = st.columns(2)
+                    with ec1:
+                        # 导出按钮
+                        cat_full_config = config.get("categories", {}).get(cat, {})
+                        export_data = {
+                            "category_name": cat,
+                            "export_time": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            "config": cat_full_config,
+                            "export_notes": "此文件包含完整的产品筛选规则配置，可导入到正式环境使用。"
+                        }
+                        export_json = json.dumps(export_data, ensure_ascii=False, indent=2)
+                        export_bytes = export_json.encode("utf-8")
+                        export_filename = f"config_{cat}_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.json"
+
+                        st.download_button(
+                            f"⬇️  导出【{cat}】完整配置",
+                            export_bytes,
+                            export_filename,
+                            "application/json",
+                            key=f"export_config_{cat}",
+                            use_container_width=True,
+                            type="primary",
+                        )
+
+                        st.caption(f"导出内容包含：")
+                        st.markdown("- ✅ 参数字典（param_schema）")
+                        st.markdown("- ✅ 特殊规格列表（special_specs）")
+                        st.markdown("- ✅ 重要规格权重（important_specs）")
+                        st.markdown("- ✅ 显示名称、单位、枚举值等元数据")
+
+                    with ec2:
+                        st.markdown("**导入配置（其他环境）**")
+                        st.caption(
+                            "将导出的 JSON 文件导入到正式环境的规则配置页面，"
+                            "覆盖当前类别的配置。"
+                        )
+
+                        # 导入文件上传
+                        import_file = st.file_uploader(
+                            "选择配置 JSON 文件",
+                            type=["json"],
+                            key=f"import_config_{cat}",
+                            help="上传从其他环境导出的配置文件",
+                        )
+
+                        if import_file:
+                            try:
+                                import_content = import_file.read().decode("utf-8")
+                                import_data = json.loads(import_content)
+
+                                # 验证导入数据结构
+                                if "config" not in import_data:
+                                    st.error("导入文件格式不正确：缺少 config 字段")
+                                elif "category_name" not in import_data:
+                                    st.error("导入文件格式不正确：缺少 category_name 字段")
+                                else:
+                                    imported_cat = import_data.get("category_name")
+                                    imported_config = import_data.get("config", {})
+
+                                    # 显示导入预览
+                                    st.success(f"✅ 文件验证通过：类别【{imported_cat}】")
+                                    st.caption(f"导出时间：{import_data.get('export_time', '未知')}")
+
+                                    with st.container():
+                                        st.markdown("**导入内容预览：**")
+
+                                        # 参数字典预览
+                                        imported_schema = imported_config.get("param_schema", {})
+                                        st.markdown(f"- 参数字典：{len(imported_schema)} 个参数")
+                                        if imported_schema:
+                                            param_preview = pd.DataFrame([
+                                                {
+                                                    "参数名": pname,
+                                                    "列名": info.get("column", ""),
+                                                    "类型": info.get("type", ""),
+                                                    "单位": info.get("unit", ""),
+                                                    "枚举值": ";".join(info.get("options", []))
+                                                }
+                                                for pname, info in imported_schema.items()
+                                            ])
+                                            st.dataframe(param_preview, use_container_width=True, hide_index=True)
+
+                                        # 特殊规格预览
+                                        imported_special = imported_config.get("special_specs", [])
+                                        st.markdown(f"- 特殊规格：{len(imported_special)} 个列")
+                                        if imported_special:
+                                            st.code(", ".join(imported_special), language="text")
+
+                                        # 重要规格预览
+                                        imported_important = imported_config.get("important_specs", {})
+                                        st.markdown(f"- 重要规格：{len(imported_important)} 个列")
+                                        if imported_important:
+                                            imp_preview = pd.DataFrame([
+                                                {
+                                                    "列名": col,
+                                                    "权重": info.get("weight", 0),
+                                                    "偏好": info.get("preference", ">=")
+                                                }
+                                                for col, info in imported_important.items()
+                                            ])
+                                            st.dataframe(imp_preview, use_container_width=True, hide_index=True)
+
+                                    # 导入确认
+                                    st.warning(
+                                        "⚠️ 导入将覆盖当前类别的所有配置！建议先导出当前配置作为备份。"
+                                    )
+
+                                    apply_col, cancel_col = st.columns(2)
+                                    with apply_col:
+                                        if st.button(
+                                            "✅  应用导入配置",
+                                            type="primary",
+                                            use_container_width=True,
+                                            key=f"apply_import_{cat}",
+                                        ):
+                                            # 应用导入的配置到当前类别
+                                            config["categories"][cat] = imported_config
+                                            dm.save_config(config)
+
+                                            # 更新数据库表结构（同步新增列）
+                                            dm.update_param_schema(cat, imported_config.get("param_schema", {}))
+
+                                            st.session_state.dm = dm
+                                            st.success(
+                                                f"✅ 【{cat}】配置已成功导入！包含 {len(imported_schema)} 个参数，"
+                                                f"{len(imported_special)} 个特殊规格，{len(imported_important)} 个重要规格。"
+                                            )
+                                            st.rerun()
+
+                                    with cancel_col:
+                                        if st.button(
+                                            "❌  取消导入",
+                                            use_container_width=True,
+                                            key=f"cancel_import_{cat}",
+                                        ):
+                                            st.session_state.pop(f"import_config_{cat}", None)
+                                            st.rerun()
+
+                            except json.JSONDecodeError:
+                                st.error("导入文件格式错误：JSON 解析失败")
+                            except Exception as e:
+                                st.error(f"导入失败：{e}")
+
+                        # 导入说明
+                        with st.popover("📖 查看导入步骤"):
+                            st.markdown("""
+                            **在正式环境导入步骤：**
+
+                            1. 将导出的 JSON 文件传输到正式环境服务器
+                            2. 在正式环境打开本应用 → 规则配置 → 选择对应类别
+                            3. 展开【配置导出与导入】区域
+                            4. 点击【导入配置】按钮，选择 JSON 文件
+                            5. 预览配置内容，确认无误后点击【应用配置】
+
+                            **注意事项：**
+                            - 导入会覆盖当前类别的所有规则配置
+                            - 请在导入前备份当前配置（先导出再导入）
+                            - 导入不会影响产品数据，仅更新筛选规则
+                            - 导入会自动同步数据库表结构（新增列）
+                            """)
+
+                st.divider()
+
+                # ── Section D: 危险操作 ────────────────────────────────────────
                 with st.expander("⚠️  危险操作", expanded=False):
                     st.warning("以下操作不可恢复，请谨慎！")
                     dc1, dc2 = st.columns(2)
