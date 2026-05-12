@@ -13,6 +13,134 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# ── 使用说明对话框（右上角按钮触发）────────────────────────────────────────────
+@st.dialog("📖 使用说明", width="large")
+def show_help_dialog():
+    """显示使用说明的对话框，支持查看和编辑模式"""
+    help_file_path = "使用说明.md"
+
+    # 初始化编辑模式状态
+    if "help_edit_mode" not in st.session_state:
+        st.session_state.help_edit_mode = False
+
+    # 读取文件内容
+    try:
+        with open(help_file_path, "r", encoding="utf-8") as f:
+            original_content = f.read()
+    except FileNotFoundError:
+        original_content = "# 使用说明\n\n暂无使用说明内容。"
+    except Exception as e:
+        original_content = f"# 使用说明\n\n读取文件失败：{e}"
+
+    # 模式切换按钮
+    col_view, col_edit, col_close = st.columns([1, 1, 1])
+    with col_view:
+        if st.button("👁️ 查看模式", disabled=not st.session_state.help_edit_mode, use_container_width=True):
+            st.session_state.help_edit_mode = False
+            st.rerun()
+    with col_edit:
+        if st.button("✏️ 编辑模式", disabled=st.session_state.help_edit_mode, use_container_width=True):
+            st.session_state.help_edit_mode = True
+            st.session_state.help_edit_content = original_content
+            st.rerun()
+    with col_close:
+        if st.button("✖️ 关闭", use_container_width=True):
+            st.session_state.help_dialog_open = False
+            st.rerun()
+
+    st.divider()
+
+    # 查看模式：渲染markdown内容
+    if not st.session_state.help_edit_mode:
+        st.markdown(original_content)
+        st.caption(f"文件路径：{help_file_path}")
+
+    # 编辑模式：文本编辑器 + 图片上传
+    else:
+        st.caption("在下方文本框编辑内容，支持Markdown格式。可上传图片并插入到文本中。")
+
+        # 初始化编辑内容
+        if "help_edit_content" not in st.session_state:
+            st.session_state.help_edit_content = original_content
+
+        # 图片上传功能
+        st.subheader("📷 插入图片")
+        uploaded_image = st.file_uploader(
+            "上传图片",
+            type=["png", "jpg", "jpeg", "gif", "webp"],
+            key="help_image_upload",
+            help="上传图片后，会自动生成Markdown图片链接，可复制到文本中"
+        )
+
+        if uploaded_image is not None:
+            # 保存图片到 images/ 目录
+            images_dir = "images"
+            if not os.path.exists(images_dir):
+                os.makedirs(images_dir)
+
+            image_filename = uploaded_image.name
+            image_path = os.path.join(images_dir, image_filename)
+
+            # 保存图片文件
+            with open(image_path, "wb") as f:
+                f.write(uploaded_image.getbuffer())
+
+            # 生成Markdown图片链接
+            markdown_image_link = f"\n![{image_filename}]({image_path})\n"
+
+            st.success(f"✅ 图片已保存到：{image_path}")
+            st.code(markdown_image_link, language="markdown")
+            st.caption("复制上面的Markdown链接，粘贴到文本编辑框中即可显示图片")
+
+            # 显示上传的图片预览
+            st.image(uploaded_image, caption=f"预览：{image_filename}", use_container_width=True)
+
+        st.divider()
+
+        # 文本编辑框
+        st.subheader("📝 编辑内容")
+        edited_content = st.text_area(
+            "使用说明内容（Markdown格式）",
+            value=st.session_state.help_edit_content,
+            height=400,
+            key="help_text_editor",
+            label_visibility="collapsed"
+        )
+
+        # 更新session state
+        st.session_state.help_edit_content = edited_content
+
+        # 保存按钮
+        col_save, col_cancel = st.columns([2, 1])
+        with col_save:
+            if st.button("💾 保存修改", type="primary", use_container_width=True):
+                try:
+                    with open(help_file_path, "w", encoding="utf-8") as f:
+                        f.write(edited_content)
+                    st.success("✅ 使用说明已保存！")
+                    st.session_state.help_edit_mode = False
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"保存失败：{e}")
+
+        with col_cancel:
+            if st.button("❌ 取消", use_container_width=True):
+                st.session_state.help_edit_mode = False
+                st.session_state.help_edit_content = original_content
+                st.rerun()
+
+
+# ── 页面顶部标题栏（右上角按钮）───────────────────────────────────────────────
+col_title, col_help = st.columns([8, 1])
+with col_title:
+    st.title("智能产品检索系统")
+with col_help:
+    # 右上角使用说明按钮
+    if st.button("📖", help="查看使用说明", use_container_width=True):
+        show_help_dialog()
+
+st.caption("LLM + 规则引擎 · 产品匹配 Demo")
+
 from streamlit_js_eval import streamlit_js_eval as _js_eval
 
 # Read API config from browser localStorage on every render.
@@ -224,9 +352,6 @@ def render_results(results: pd.DataFrame, extracted: dict, global_config: dict):
 
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.title("🔍 智能检索系统")
-    st.caption("LLM + 规则引擎 · 产品匹配 Demo")
-    st.divider()
 
     st.subheader("🔑 API 配置")
 

@@ -2,11 +2,14 @@
   "global": {
     "price_sort": "asc",
     "tag_bonuses": {
-      "新品": 5,
-      "爆款": 4,
-      "高毛利": 3,
-      "现货": 2,
-      "清仓": -3
+      "停产": 0.0,
+      "新品": 5.0,
+      "清仓": 2.0,
+      "爆款": 4.0,
+      "现货": 2.0,
+      "高毛利": 3.0,
+      "高盘位": 0.0,
+      "高解码": 0.0
     }
   },
   "categories": {
@@ -17,13 +20,17 @@
           "type": "numeric",
           "unit": "MP",
           "display_name": "分辨率",
-          "hint": "换算为百万像素：400万=4MP，200万=2MP，1080P≈2MP，4K≈8MP"
+          "hint": "换算为百万像素：400万=4MP，200万=2MP，1080P≈2MP，4K≈8MP",
+          "options": [],
+          "default_operator": "="
         },
         "最高帧率": {
           "column": "frame_rate",
           "type": "numeric",
           "unit": "fps",
-          "display_name": "最高帧率"
+          "display_name": "最高帧率",
+          "options": [],
+          "default_operator": "="
         },
         "传感器尺寸": {
           "column": "sensor_size",
@@ -35,13 +42,16 @@
             "1/2.0\"",
             "1/2.8\"",
             "1/3.0\""
-          ]
+          ],
+          "default_operator": "="
         },
         "焦距": {
           "column": "focal_length_mm",
           "type": "numeric",
           "unit": "mm",
-          "display_name": "焦距"
+          "display_name": "焦距",
+          "options": [],
+          "default_operator": "="
         },
         "补光类型": {
           "column": "ir_mode",
@@ -52,20 +62,25 @@
             "红外",
             "暖光",
             "无"
-          ]
+          ],
+          "default_operator": "="
         },
         "补光距离": {
           "column": "ir_range_m",
           "type": "numeric",
           "unit": "m",
-          "display_name": "补光距离"
+          "display_name": "补光距离",
+          "options": [],
+          "default_operator": "="
         },
         "最低照度": {
           "column": "min_illumination_lux",
           "type": "numeric",
           "unit": "lux",
           "display_name": "最低照度",
-          "hint": "值越小越好，全彩可达0.0005lux，红外0.01lux"
+          "hint": "值越小越好，全彩可达0.0005lux，红外0.01lux",
+          "options": [],
+          "default_operator": "="
         },
         "视频编码": {
           "column": "compression",
@@ -77,7 +92,8 @@
             "H.265",
             "H.264",
             "MJPEG"
-          ]
+          ],
+          "default_operator": "="
         },
         "防护等级": {
           "column": "protection_level",
@@ -89,7 +105,8 @@
             "IP66",
             "IP65",
             "IP54"
-          ]
+          ],
+          "default_operator": "="
         },
         "供电方式": {
           "column": "power_supply",
@@ -100,25 +117,32 @@
             "DC12V/PoE",
             "DC12V",
             "PoE"
-          ]
+          ],
+          "default_operator": "contains"
         },
         "最低工作温度": {
           "column": "temp_min",
           "type": "numeric",
           "unit": "℃",
-          "display_name": "最低工作温度"
+          "display_name": "最低工作温度",
+          "options": [],
+          "default_operator": "="
         },
         "最高工作温度": {
           "column": "temp_max",
           "type": "numeric",
           "unit": "℃",
-          "display_name": "最高工作温度"
+          "display_name": "最高工作温度",
+          "options": [],
+          "default_operator": "="
         },
         "价格": {
           "column": "price",
           "type": "numeric",
           "unit": "元",
-          "display_name": "价格"
+          "display_name": "价格",
+          "options": [],
+          "default_operator": "="
         }
       },
       "special_specs": [
@@ -581,7 +605,7 @@
           "unit": "盘位",
           "options": [],
           "hint": "支持的SATA硬盘接口数量",
-          "default_operator": "="
+          "default_operator": ">="
         },
         "接入带宽": {
           "column": "incoming_bandwidth_mbps",
@@ -597,7 +621,7 @@
           "unit": "个",
           "options": [],
           "hint": "RJ45以太网电口数量",
-          "default_operator": "="
+          "default_operator": ">="
         },
         "HDMI接口": {
           "column": "hdmi_ports",
@@ -605,7 +629,7 @@
           "unit": "个",
           "options": [],
           "hint": "HDMI视频输出接口数量",
-          "default_operator": "="
+          "default_operator": ">="
         },
         "VGA接口": {
           "column": "vga_ports",
@@ -613,7 +637,7 @@
           "unit": "个",
           "options": [],
           "hint": "VGA视频输出接口数量",
-          "default_operator": "="
+          "default_operator": ">="
         },
         "报警输入": {
           "column": "alarm_input",
@@ -682,6 +706,247 @@
         "network_ports": {
           "weight": 0.25,
           "display_name": "network_ports",
+          "preference": ">="
+        },
+        "model_name": {
+          "weight": 0.25,
+          "display_name": "model_name",
+          "preference": ">="
+        },
+        "incoming_bandwidth_mbps": {
+          "weight": 0.25,
+          "display_name": "incoming_bandwidth_mbps",
+          "preference": ">="
+        },
+        "alarm_input": {
+          "weight": 0.25,
+          "display_name": "alarm_input",
+          "preference": ">="
+        },
+        "alarm_output": {
+          "weight": 0.25,
+          "display_name": "alarm_output",
+          "preference": ">="
+        },
+        "video_decode_format": {
+          "weight": 0.25,
+          "display_name": "video_decode_format",
+          "preference": ">="
+        },
+        "ai_features": {
+          "weight": 0.25,
+          "display_name": "ai_features",
+          "preference": ">="
+        },
+        "raid_support": {
+          "weight": 0.25,
+          "display_name": "raid_support",
+          "preference": ">="
+        }
+      }
+    },
+    "速通门": {
+      "param_schema": {
+        "产品型号": {
+          "column": "model",
+          "type": "text",
+          "unit": "",
+          "options": [],
+          "hint": "设备的具体型号编码",
+          "default_operator": "="
+        },
+        "闸机类型": {
+          "column": "gate_type",
+          "type": "enum",
+          "unit": "",
+          "options": [
+            "三辊闸",
+            "摆闸"
+          ],
+          "hint": "闸机的阻拦体结构形式",
+          "default_operator": "="
+        },
+        "设备形态": {
+          "column": "device_form",
+          "type": "enum",
+          "unit": "",
+          "options": [
+            "左边机",
+            "右边机",
+            "中间机"
+          ],
+          "hint": "设备在通道中的安装位置角色",
+          "default_operator": "="
+        },
+        "机身厚度": {
+          "column": "body_thickness_mm",
+          "type": "numeric",
+          "unit": "mm",
+          "options": [],
+          "hint": "机箱不锈钢板的厚度",
+          "default_operator": ">="
+        },
+        "顶盖厚度": {
+          "column": "cover_thickness_mm",
+          "type": "numeric",
+          "unit": "mm",
+          "options": [],
+          "hint": "顶盖不锈钢板的厚度",
+          "default_operator": "="
+        },
+        "最大通道宽度": {
+          "column": "max_channel_width_mm",
+          "type": "numeric",
+          "unit": "mm",
+          "options": [],
+          "hint": "允许通行的最大宽度限制",
+          "default_operator": ">="
+        },
+        "整机重量": {
+          "column": "weight_kg",
+          "type": "numeric",
+          "unit": "kg",
+          "options": [],
+          "hint": "设备整机重量",
+          "default_operator": "="
+        },
+        "整机尺寸": {
+          "column": "dimensions",
+          "type": "text",
+          "unit": "",
+          "options": [],
+          "hint": "长*宽*高尺寸信息",
+          "default_operator": "="
+        },
+        "最大功率": {
+          "column": "power_max_w",
+          "type": "numeric",
+          "unit": "W",
+          "options": [],
+          "hint": "设备工作时的最大功率消耗",
+          "default_operator": "="
+        },
+        "工作电压": {
+          "column": "voltage",
+          "type": "enum",
+          "unit": "",
+          "options": [
+            "AC220V"
+          ],
+          "hint": "额定工作电压",
+          "default_operator": "="
+        },
+        "最低工作温度": {
+          "column": "temp_min",
+          "type": "numeric",
+          "unit": "℃",
+          "options": [],
+          "hint": "设备允许的最低环境温度",
+          "default_operator": "="
+        },
+        "最高工作温度": {
+          "column": "temp_max",
+          "type": "numeric",
+          "unit": "℃",
+          "options": [],
+          "hint": "设备允许的最高环境温度",
+          "default_operator": "="
+        },
+        "使用环境": {
+          "column": "usage_env",
+          "type": "enum",
+          "unit": "",
+          "options": [
+            "室内",
+            "室外",
+            "室内外"
+          ],
+          "hint": "设备适用的安装环境",
+          "default_operator": "="
+        },
+        "断电状态": {
+          "column": "power_off_action",
+          "type": "enum",
+          "unit": "",
+          "options": [
+            "断电自动落杆",
+            "断电自动开门"
+          ],
+          "hint": "断电时的默认安全动作",
+          "default_operator": "="
+        },
+        "价格": {
+          "column": "price",
+          "type": "numeric",
+          "unit": "元",
+          "options": [],
+          "hint": "设备销售价格",
+          "default_operator": "="
+        }
+      },
+      "special_specs": [
+        "gate_type",
+        "max_channel_width_mm"
+      ],
+      "important_specs": {
+        "model": {
+          "weight": 0.25,
+          "display_name": "model",
+          "preference": ">="
+        },
+        "device_form": {
+          "weight": 0.25,
+          "display_name": "device_form",
+          "preference": ">="
+        },
+        "body_thickness_mm": {
+          "weight": 0.25,
+          "display_name": "body_thickness_mm",
+          "preference": ">="
+        },
+        "cover_thickness_mm": {
+          "weight": 0.25,
+          "display_name": "cover_thickness_mm",
+          "preference": ">="
+        },
+        "weight_kg": {
+          "weight": 0.25,
+          "display_name": "weight_kg",
+          "preference": ">="
+        },
+        "dimensions": {
+          "weight": 0.25,
+          "display_name": "dimensions",
+          "preference": ">="
+        },
+        "power_max_w": {
+          "weight": 0.25,
+          "display_name": "power_max_w",
+          "preference": ">="
+        },
+        "voltage": {
+          "weight": 0.25,
+          "display_name": "voltage",
+          "preference": ">="
+        },
+        "temp_min": {
+          "weight": 0.25,
+          "display_name": "temp_min",
+          "preference": ">="
+        },
+        "temp_max": {
+          "weight": 0.25,
+          "display_name": "temp_max",
+          "preference": ">="
+        },
+        "usage_env": {
+          "weight": 0.25,
+          "display_name": "usage_env",
+          "preference": ">="
+        },
+        "power_off_action": {
+          "weight": 0.25,
+          "display_name": "power_off_action",
           "preference": ">="
         }
       }
