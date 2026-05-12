@@ -1,6 +1,5 @@
 import os
 import json
-from datetime import datetime
 import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
@@ -14,10 +13,44 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-import extra_streamlit_components as stx
+from streamlit_js_eval import streamlit_js_eval as _js_eval
 
-# Hidden component — renders at page top, reads/writes browser cookies for API config persistence
-_cm = stx.CookieManager(key="api_cfg")
+# Read API config from browser localStorage on every render.
+# Returns None before the JS component has loaded, then a JSON string.
+# Uses localStorage (not cookies) — works on HTTPS behind reverse proxy without SameSite/Secure issues.
+_ls_raw = _js_eval(
+    js_expressions="""JSON.stringify({
+      api_key:  localStorage.getItem('unv_api_key')  || '',
+      base_url: localStorage.getItem('unv_base_url') || '',
+      model:    localStorage.getItem('unv_model')    || ''
+    })""",
+    key="_ls_read",
+)
+
+# Execute a pending localStorage write triggered by the save/clear sidebar buttons.
+# The pending op is set in session_state by the button handler, consumed here on the next render.
+if st.session_state.get("_ls_pending") == "save":
+    _js_eval(
+        js_expressions=(
+            f"localStorage.setItem('unv_api_key',{json.dumps(st.session_state.get('_ls_k',''))});"
+            f"localStorage.setItem('unv_base_url',{json.dumps(st.session_state.get('_ls_u',''))});"
+            f"localStorage.setItem('unv_model',{json.dumps(st.session_state.get('_ls_m',''))});"
+            "true"
+        ),
+        key="_ls_write_save",
+    )
+    st.session_state._ls_pending = None
+elif st.session_state.get("_ls_pending") == "clear":
+    _js_eval(
+        js_expressions=(
+            "localStorage.removeItem('unv_api_key');"
+            "localStorage.removeItem('unv_base_url');"
+            "localStorage.removeItem('unv_model');"
+            "true"
+        ),
+        key="_ls_write_clear",
+    )
+    st.session_state._ls_pending = None
 
 from core.data_manager import DataManager
 from core.llm_mapper import LLMMapper
@@ -41,7 +74,9 @@ def _init_state():
         "last_results": None,
         "last_input": "",
         "last_category": None,
-        "_api_cfg_from_cookie": False,  # True once we've loaded from browser cookies this session
+        "_api_cfg_from_ls": False,   # True once localStorage values have been loaded this session
+        "_ls_pending": None,         # "save" | "clear" | None — consumed at top of next render
+        "_ls_k": "", "_ls_u": "", "_ls_m": "",  # values staged for localStorage write
     }.items():
         if k not in st.session_state:
             st.session_state[k] = v
@@ -195,28 +230,28 @@ with st.sidebar:
 
     st.subheader("🔑 API 配置")
 
-    # Load from browser cookies once per browser session.
-    # get_all() returns None before the JS component finishes loading,
-    # and a dict (possibly empty) once it has — so isinstance(..., dict) is the reliable gate.
-    if not st.session_state._api_cfg_from_cookie:
+    # Load localStorage values into session_state once per browser session.
+    # _ls_raw is None until the JS component has loaded (usually one render cycle later).
+    if not st.session_state._api_cfg_from_ls and _ls_raw is not None:
         try:
-            _ck = _cm.get_all()
+            _cfg = json.loads(_ls_raw)
+            if _cfg.get("api_key"):
+                st.session_state.api_key = _cfg["api_key"]
+            if _cfg.get("base_url"):
+                st.session_state.base_url = _cfg["base_url"]
+            if _cfg.get("model"):
+                st.session_state.model = _cfg["model"]
         except Exception:
-            _ck = None
-        if isinstance(_ck, dict):
-            if _ck.get("api_key"):
-                st.session_state.api_key = _ck["api_key"]
-            if _ck.get("base_url"):
-                st.session_state.base_url = _ck["base_url"]
-            if _ck.get("model"):
-                st.session_state.model = _ck["model"]
-            st.session_state._api_cfg_from_cookie = True
+            pass
+        st.session_state._api_cfg_from_ls = True
 
-    _saved_in_browser = st.session_state._api_cfg_from_cookie and bool(
-        ((_cm.get_all() or {}).get("api_key"))
-    )
-    if _saved_in_browser:
-        st.caption("✅ 已从浏览器本地读取保存的配置")
+    # Show caption when a saved config was found in localStorage
+    try:
+        _ls_has_key = bool((json.loads(_ls_raw) if _ls_raw else {}).get("api_key"))
+    except Exception:
+        _ls_has_key = False
+    if _ls_has_key:
+        st.caption("✅ 已从浏览器本地读取配置")
 
     key_input = st.text_input(
         "API Key",
@@ -248,19 +283,17 @@ with st.sidebar:
 
     _c1, _c2 = st.columns(2)
     with _c1:
-        if st.button("💾 保存到本地", use_container_width=True, help="保存到浏览器，下次访问自动加载，无需重新输入"):
-            _exp = datetime(2099, 1, 1)
-            _cm.set("api_key",  key_input,      expires_at=_exp)
-            _cm.set("base_url", base_url_input, expires_at=_exp)
-            _cm.set("model",    model_input,    expires_at=_exp)
-            st.success("✅ 已保存！")
+        if st.button("💾 保存到本地", use_container_width=True, help="保存到浏览器 localStorage，下次访问自动加载"):
+            st.session_state._ls_pending = "save"
+            st.session_state._ls_k = key_input
+            st.session_state._ls_u = base_url_input
+            st.session_state._ls_m = model_input
+            st.toast("✅ 配置已保存，下次访问自动加载", icon="💾")
     with _c2:
         if st.button("🗑 清除", use_container_width=True, help="清除浏览器中已保存的配置"):
-            _cm.delete("api_key")
-            _cm.delete("base_url")
-            _cm.delete("model")
-            st.session_state._api_cfg_from_cookie = False
-            st.info("已清除本地配置")
+            st.session_state._ls_pending = "clear"
+            st.session_state._api_cfg_from_ls = False
+            st.toast("已清除本地保存的配置", icon="🗑")
 
     if st.session_state.api_key:
         st.success(f"已配置: {st.session_state.model} ✅")
