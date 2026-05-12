@@ -298,40 +298,308 @@ with tab_search:
         categories_config = config.get("categories", {})
 
         st.divider()
-        st.markdown("#### Step 1 · Claude 参数解析（两步识别）")
-        with st.spinner("Step 1a: 识别产品类别..."):
+
+        # 创建主进度容器
+        progress_container = st.container()
+
+        with progress_container:
+            # ========== Step 1: LLM 参数解析（两步识别） ==========
+            st.markdown("#### 🧠 Step 1 · Claude 智能参数解析")
+
+            # Step 1a: 类别识别
+            step1a_status = st.status("**Step 1a · 产品类别识别**", state="running")
+
             try:
+                step1a_status.write("📋 正在分析客户需求文本...")
+                step1a_status.write(f"输入文本长度：{len(customer_text)} 字符")
+
+                step1a_status.write("🔍 正在准备类别列表...")
+                available_categories = list(categories_config.keys())
+                step1a_status.write(f"可用类别：{', '.join(available_categories)}")
+
                 mapper = LLMMapper(
                     st.session_state.api_key,
                     base_url=st.session_state.base_url or None,
                     model=st.session_state.model,
                 )
-                extracted = mapper.extract_params(customer_text, categories_config)
-                st.session_state.last_extracted = extracted
-                st.session_state.last_category = extracted.get("category")
+
+                step1a_status.write(f"🤖 正在调用 LLM ({st.session_state.model})...")
+                step1a_status.write("Prompt 构建完成：")
+                step1a_status.code(
+                    f"System: 产品类别识别专家\n"
+                    f"User: 可选类别列表 + 客户需求描述\n"
+                    f"Max Tokens: 200 (快速调用)",
+                    language="text"
+                )
+
+                # 执行类别识别
+                categories = available_categories
+                cat_content = f"可选产品类别：\n{chr(10).join(f'- {c}' for c in categories)}\n\n客户需求描述：\n{customer_text}"
+
+                step1a_status.write("正在发送请求到大模型...")
+                import anthropic
+                kwargs = {"api_key": st.session_state.api_key}
+                if st.session_state.base_url:
+                    kwargs["base_url"] = st.session_state.base_url
+
+                client = anthropic.Anthropic(**kwargs)
+                cat_msg = client.messages.create(
+                    model=st.session_state.model,
+                    max_tokens=200,
+                    system="你是产品类别识别专家。根据客户的需求描述，判断最匹配的产品类别。",
+                    messages=[{"role": "user", "content": cat_content}],
+                )
+
+                # 解析类别识别结果
+                import json
+                import re
+                cat_text = ""
+                for block in cat_msg.content:
+                    if hasattr(block, "text"):
+                        cat_text = block.text
+
+                step1a_status.write(f"✅ 收到响应（{len(cat_text)} 字符）")
+                step1a_status.write("正在解析 JSON 结果...")
+
+                # JSON 解析
+                cat_text_clean = cat_text.strip()
+                fence = re.search(r"```(?:json)?\s*([\s\S]*?)```", cat_text_clean)
+                if fence:
+                    cat_text_clean = fence.group(1).strip()
+
+                try:
+                    cat_result = json.loads(cat_text_clean)
+                    category = cat_result.get("category")
+                except:
+                    m = re.search(r"\{.*\}", cat_text_clean, re.DOTALL)
+                    if m:
+                        cat_result = json.loads(m.group())
+                        category = cat_result.get("category")
+                    else:
+                        category = None
+
+                if category and category in available_categories:
+                    step1a_status.update(label=f"**✅ Step 1a 完成 · 类别识别成功：{category}**", state="complete")
+                    st.success(f"🎯 **识别类别**：{category}")
+                else:
+                    step1a_status.update(label="**❌ Step 1a 失败 · 无法识别类别**", state="error")
+                    st.error("未能识别产品类别，请在需求描述中明确产品类型。")
+                    extracted = None
+
             except Exception as e:
-                st.error(f"LLM 调用失败: {e}")
+                step1a_status.update(label=f"**❌ Step 1a 失败 · {str(e)[:100]}**", state="error")
+                st.error(f"类别识别失败: {e}")
                 extracted = None
 
-        if extracted:
-            render_extracted_params(extracted)
-            category = extracted.get("category")
+            # 如果类别识别成功，继续参数提取
+            if category and category in available_categories:
+                # Step 1b: 参数提取
+                step1b_status = st.status("**Step 1b · 参数提取**", state="running")
 
-            if not category:
-                st.error("未能识别产品类别，请在需求描述中明确产品类型（如：工业相机、网络摄像机、信息发布屏）。")
-            else:
-                products = dm.get_products(category)
-                if products.empty:
-                    st.warning(f"【{category}】产品库为空，请先在【产品库管理】中导入产品数据。")
-                else:
-                    st.markdown("#### Step 2 · 规则引擎筛选与评分")
-                    with st.spinner("正在应用规则过滤和评分..."):
+                try:
+                    step1b_status.write(f"📂 正在加载【{category}】参数字典...")
+                    cat_cfg = categories_config[category]
+                    param_schema = cat_cfg.get("param_schema", {})
+                    step1b_status.write(f"参数字典包含 {len(param_schema)} 个字段")
+
+                    # 构建参数字典字符串
+                    param_dict_lines = []
+                    for name, info in param_schema.items():
+                        col = info.get("column", "")
+                        unit = info.get("unit", "无") or "无"
+                        default_op = info.get("default_operator", "=")
+                        opts = info.get("options", [])
+                        line = f"- 参数名: {name} | 列名: {col} | 单位: {unit} | 默认比较: {default_op}"
+                        if opts:
+                            line += f" | 枚举值: {'/'.join(opts)}"
+                        param_dict_lines.append(line)
+
+                    param_dict_str = chr(10).join(param_dict_lines)
+                    step1b_status.write("参数字典构建完成")
+
+                    with step1b_status.expander("查看参数字典详情"):
+                        st.code(param_dict_str, language="text")
+
+                    step1b_status.write(f"🤖 正在调用 LLM ({st.session_state.model})...")
+                    step1b_status.write("Prompt 构建完成：")
+                    step1b_status.code(
+                        f"System: 产品参数解析专家\n"
+                        f"User: 类别 + 参数字典 + 客户需求 + 转换规则\n"
+                        f"Max Tokens: 2048 (详细调用)",
+                        language="text"
+                    )
+
+                    step1b_status.write("正在发送请求到大模型...")
+
+                    # 构建参数提取 prompt
+                    param_content = f"""## 产品类别
+{category}
+
+## 该类别标准参数字典
+{param_dict_str}
+
+## 客户需求描述
+{customer_text}
+
+## 输出格式（严格JSON）
+ {{
+  "extracted_params": [
+    {{
+      "standard_name": "参数名称",
+      "column_name": "对应列名",
+      "value": 参数值,
+      "operator": "运算符",
+      "unit": "单位",
+      "original_text": "原文片段",
+      "confidence": 置信度
+    }}
+  ],
+  "summary": "一句话总结"
+}}
+
+## 转换规则
+1. 分辨率统一换算为MP
+2. 温度统一摄氏度
+3. 优先使用默认比较方式
+4. 只提取匹配参数字典的参数"""
+
+                    # 调用 LLM 参数提取
+                    param_msg = client.messages.create(
+                        model=st.session_state.model,
+                        max_tokens=2048,
+                        system="你是专业的产品参数解析专家。将客户需求转换为标准参数格式。",
+                        messages=[{"role": "user", "content": param_content}],
+                    )
+
+                    # 解析参数提取结果
+                    param_text = ""
+                    for block in param_msg.content:
+                        if hasattr(block, "text"):
+                            param_text = block.text
+
+                    step1b_status.write(f"✅ 收到响应（{len(param_text)} 字符）")
+                    step1b_status.write("正在解析 JSON 结果...")
+
+                    # JSON 解析
+                    param_text_clean = param_text.strip()
+                    fence = re.search(r"```(?:json)?\s*([\s\S]*?)```", param_text_clean)
+                    if fence:
+                        param_text_clean = fence.group(1).strip()
+
+                    try:
+                        result = json.loads(param_text_clean)
+                    except:
+                        m = re.search(r"\{.*\}", param_text_clean, re.DOTALL)
+                        if m:
+                            result = json.loads(m.group())
+                        else:
+                            result = {"extracted_params": [], "summary": "解析失败"}
+
+                    extracted_params = result.get("extracted_params", [])
+                    summary = result.get("summary", "")
+
+                    step1b_status.write(f"✅ 成功提取 {len(extracted_params)} 个参数")
+
+                    if extracted_params:
+                        # 显示提取的参数摘要
+                        params_summary = []
+                        for p in extracted_params:
+                            name = p.get("standard_name", "")
+                            value = p.get("value", "")
+                            op = p.get("operator", "")
+                            params_summary.append(f"{name} {op} {value}")
+
+                        step1b_status.write("提取参数摘要：")
+                        step1b_status.code(chr(10).join(params_summary), language="text")
+
+                    step1b_status.update(label=f"**✅ Step 1b 完成 · 参数提取成功（{len(extracted_params)} 个参数）**", state="complete")
+
+                    # 组合完整的 extracted 结果
+                    extracted = {
+                        "category": category,
+                        "extracted_params": extracted_params,
+                        "summary": summary
+                    }
+                    st.session_state.last_extracted = extracted
+                    st.session_state.last_category = category
+
+                    # 显示提取结果摘要
+                    st.info(f"**需求摘要**：{summary}")
+
+                except Exception as e:
+                    step1b_status.update(label=f"**❌ Step 1b 失败 · {str(e)[:100]}**", state="error")
+                    st.error(f"参数提取失败: {e}")
+                    extracted = None
+
+            # ========== Step 2: 规则引擎筛选与评分 ==========
+            if extracted and category:
+                st.markdown("#### ⚙️ Step 2 · 规则引擎筛选与评分")
+
+                step2_status = st.status("**Step 2 · 规则引擎处理**", state="running")
+
+                try:
+                    step2_status.write(f"📊 正在从数据库加载【{category}】产品...")
+                    products = dm.get_products(category)
+
+                    if products.empty:
+                        step2_status.update(label="**⚠️ Step 2 警告 · 产品库为空**", state="complete")
+                        st.warning(f"【{category}】产品库为空，请先导入产品数据。")
+                    else:
+                        step2_status.write(f"✅ 加载 {len(products)} 款产品")
+
+                        # 显示产品统计
+                        with step2_status.expander("查看产品库统计"):
+                            st.dataframe(
+                                products[["product_id", "product_name", "price"]].head(10),
+                                use_container_width=True,
+                                hide_index=True
+                            )
+
+                        step2_status.write("🔧 正在初始化规则引擎...")
                         cat_cfg = dm.get_category_config(category)
                         global_cfg = dm.get_global_config()
                         engine = RuleEngine(cat_cfg, global_cfg)
+
+                        step2_status.write("正在应用规则过滤和评分...")
+
+                        # 显示规则配置摘要
+                        special_specs = cat_cfg.get("special_specs", [])
+                        important_specs = cat_cfg.get("important_specs", {})
+
+                        step2_status.write(f"特殊规格过滤：{len(special_specs)} 个字段")
+                        step2_status.code(f"字段：{', '.join(special_specs)}", language="text")
+
+                        step2_status.write(f"重要规格评分：{len(important_specs)} 个字段")
+                        weights_info = []
+                        for col, cfg in important_specs.items():
+                            weights_info.append(f"{col}: 权重 {cfg.get('weight', 0)}")
+                        step2_status.code(chr(10).join(weights_info), language="text")
+
+                        # 执行规则引擎
                         results = engine.filter_and_score(products, extracted)
                         st.session_state.last_results = results
-                    render_results(results, extracted, global_cfg)
+
+                        # 统计结果
+                        passed = results[results["_pass"]]
+                        failed = results[~results["_pass"]]
+
+                        step2_status.write(f"✅ 筛选完成")
+                        step2_status.write(f"通过筛选：{len(passed)} 款")
+                        step2_status.write(f"被过滤：{len(failed)} 款")
+
+                        if len(passed) > 0:
+                            top_score = passed.iloc[0]["_total_score"]
+                            top_product = passed.iloc[0].get("product_name", "")
+                            step2_status.write(f"🏆 最高得分：{top_score:.1f} 分 - {top_product}")
+
+                        step2_status.update(label=f"**✅ Step 2 完成 · 推荐 {len(passed)} 款产品**", state="complete")
+
+                        # 渲染结果
+                        render_results(results, extracted, global_cfg)
+
+                except Exception as e:
+                    step2_status.update(label=f"**❌ Step 2 失败 · {str(e)[:100]}**", state="error")
+                    st.error(f"规则引擎处理失败: {e}")
 
     elif (
         st.session_state.last_extracted is not None
