@@ -359,32 +359,102 @@ with tab_search:
                         cat_text = block.text
 
                 step1a_status.write(f"✅ 收到响应（{len(cat_text)} 字符）")
+
+                # 显示原始响应内容（便于调试）
+                with step1a_status.expander("查看 LLM 原始响应"):
+                    st.code(cat_text, language="text")
+
                 step1a_status.write("正在解析 JSON 结果...")
 
-                # JSON 解析
+                # JSON 解析（增强容错）
                 cat_text_clean = cat_text.strip()
                 fence = re.search(r"```(?:json)?\s*([\s\S]*?)```", cat_text_clean)
                 if fence:
                     cat_text_clean = fence.group(1).strip()
 
+                # 尝试多种解析方式
+                category = None
+                parse_error = None
+
+                # 方法1：直接解析
                 try:
                     cat_result = json.loads(cat_text_clean)
                     category = cat_result.get("category")
-                except:
-                    m = re.search(r"\{.*\}", cat_text_clean, re.DOTALL)
-                    if m:
-                        cat_result = json.loads(m.group())
-                        category = cat_result.get("category")
-                    else:
-                        category = None
+                    step1a_status.write(f"✅ JSON 解析成功（方法1：直接解析）")
+                except json.JSONDecodeError as e1:
+                    parse_error = str(e1)
+                    step1a_status.write(f"⚠️ 方法1失败：{parse_error}")
 
+                    # 方法2：提取 {...} 模式
+                    m = re.search(r"\{[^{}]*\}", cat_text_clean, re.DOTALL)
+                    if m:
+                        try:
+                            cat_result = json.loads(m.group())
+                            category = cat_result.get("category")
+                            step1a_status.write(f"✅ JSON 解析成功（方法2：正则提取）")
+                        except json.JSONDecodeError as e2:
+                            step1a_status.write(f"⚠️ 方法2失败：{str(e2)}")
+
+                    # 方法3：尝试添加缺失的引号或括号
+                    if not category:
+                        # 尝试修复常见格式问题
+                        fixed_text = cat_text_clean
+                        if not fixed_text.startswith("{"):
+                            fixed_text = "{" + fixed_text
+                        if not fixed_text.endswith("}"):
+                            fixed_text = fixed_text + "}"
+                        if '"category"' not in fixed_text and 'category' in fixed_text:
+                            fixed_text = fixed_text.replace('category', '"category"')
+
+                        try:
+                            cat_result = json.loads(fixed_text)
+                            category = cat_result.get("category")
+                            step1a_status.write(f"✅ JSON 解析成功（方法3：格式修复）")
+                        except json.JSONDecodeError as e3:
+                            step1a_status.write(f"⚠️ 方法3失败：{str(e3)}")
+
+                # 最终结果处理
                 if category and category in available_categories:
+                    step1a_status.write(f"🎯 类别识别结果：{category}")
                     step1a_status.update(label=f"**✅ Step 1a 完成 · 类别识别成功：{category}**", state="complete")
                     st.success(f"🎯 **识别类别**：{category}")
                 else:
-                    step1a_status.update(label="**❌ Step 1a 失败 · 无法识别类别**", state="error")
-                    st.error("未能识别产品类别，请在需求描述中明确产品类型。")
-                    extracted = None
+                    step1a_status.write(f"⚠️ JSON 解析未成功，尝试文本提取...")
+
+                    # 方法4：从纯文本中提取类别名称（兜底方案）
+                    # 尝试匹配markdown格式：**类别名称**
+                    md_match = re.search(r'\*\*(.+?)\*\*', cat_text)
+                    if md_match:
+                        potential_cat = md_match.group(1).strip()
+                        step1a_status.write(f"发现 markdown 格式：**{potential_cat}**")
+                        if potential_cat in available_categories:
+                            category = potential_cat
+                            step1a_status.write(f"✅ 从文本中提取类别成功（方法4：markdown匹配）")
+
+                    # 方法5：直接匹配文本中的类别名称
+                    if not category:
+                        for avail_cat in available_categories:
+                            if avail_cat in cat_text:
+                                category = avail_cat
+                                step1a_status.write(f"✅ 从文本中匹配类别成功（方法5：直接匹配）")
+                                break
+
+                    # 最终判断
+                    if category and category in available_categories:
+                        step1a_status.write(f"🎯 类别识别结果：{category}")
+                        step1a_status.update(label=f"**✅ Step 1a 完成 · 类别识别成功：{category}**", state="complete")
+                        st.success(f"🎯 **识别类别**：{category}")
+                    else:
+                        step1a_status.write(f"❌ 所有解析方法失败")
+                        step1a_status.write(f"解析结果：{category if category else 'None'}")
+                        step1a_status.write(f"原始响应：{cat_text}")
+
+                        if category and category not in available_categories:
+                            step1a_status.write(f"⚠️ 类别不在配置列表中：{category}")
+
+                        step1a_status.update(label="**❌ Step 1a 失败 · 无法识别类别**", state="error")
+                        st.error(f"未能识别产品类别。原始响应：`{cat_text}`")
+                        extracted = None
 
             except Exception as e:
                 step1a_status.update(label=f"**❌ Step 1a 失败 · {str(e)[:100]}**", state="error")
