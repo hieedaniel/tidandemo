@@ -292,8 +292,14 @@ with tab_search:
 
     # ── Execute search ─────────────────────────────────────────────────────────
     if run_search and customer_text.strip():
+        # Clear previous search results before starting new search
+        st.session_state.last_extracted = None
+        st.session_state.last_results = None
+        st.session_state.last_category = None
+
         st.session_state.last_input = customer_text
         dm = get_dm()
+        dm._config = None  # Force fresh config read so Tab 3 rule changes take effect immediately
         config = dm.get_config()
         categories_config = config.get("categories", {})
 
