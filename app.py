@@ -542,28 +542,20 @@ with tab_search:
                     )
 
                     # 解析参数提取结果
-                    param_text = ""
-                    for block in param_msg.content:
-                        if hasattr(block, "text"):
-                            param_text = block.text
+                    from core.llm_mapper import _parse_json_safe, _extract_text
+                    param_text = _extract_text(param_msg)
 
                     step1b_status.write(f"✅ 收到响应（{len(param_text)} 字符）")
+
+                    with step1b_status.expander("查看 LLM 原始响应"):
+                        st.code(param_text, language="text")
+
                     step1b_status.write("正在解析 JSON 结果...")
+                    result = _parse_json_safe(param_text)
 
-                    # JSON 解析
-                    param_text_clean = param_text.strip()
-                    fence = re.search(r"```(?:json)?\s*([\s\S]*?)```", param_text_clean)
-                    if fence:
-                        param_text_clean = fence.group(1).strip()
-
-                    try:
-                        result = json.loads(param_text_clean)
-                    except:
-                        m = re.search(r"\{.*\}", param_text_clean, re.DOTALL)
-                        if m:
-                            result = json.loads(m.group())
-                        else:
-                            result = {"extracted_params": [], "summary": "解析失败"}
+                    # 解析失败时显示错误但不中断流程
+                    if result.get("error"):
+                        step1b_status.write(f"⚠️ JSON 解析遇到问题：{result['error'][:200]}")
 
                     extracted_params = result.get("extracted_params", [])
                     summary = result.get("summary", "")
