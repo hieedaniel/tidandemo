@@ -193,14 +193,12 @@ def _match_degree(product_val, required_val, operator: str) -> float:
         rf = float(str(required_val).replace(",", ""))
         if rf == 0:
             return 1.0
-        if operator == ">=":
-            if pf >= rf:
-                return min(1.2, 1.0 + (pf - rf) / rf * 0.4)
-            return max(0.0, (pf / rf) * 0.8)
-        if operator == "<=":
-            if pf <= rf:
-                return min(1.2, 1.0 + (rf - pf) / rf * 0.2)
-            return max(0.0, (rf / pf) * 0.6)
+        if operator in (">=", "<="):
+            if pf <= 0:
+                return 0.0
+            ratio = pf / rf
+            # Closest to requirement (ratio→1) scores highest; symmetric in both directions
+            return min(ratio, 1.0 / ratio)
     except (ValueError, TypeError):
         return 1.0 if _compare(product_val, required_val, "=") else 0.0
     return 0.0
